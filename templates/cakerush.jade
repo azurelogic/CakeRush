@@ -1,0 +1,80 @@
+extends layout
+
+block append styles
+  link(rel='stylesheet', href='/style/cakerush.css')
+
+block append scripts
+  script(type="text/javascript",src="/js/socket.io.js")
+  script(type="text/javascript",src="/js/lib/easeljs/easeljs-0.6.0.min.js")
+  //-script(type="text/javascript",src="//cdn.socket.io/socket.io-1.0.6.js")
+  //-script(type="text/javascript",src="//code.createjs.com/easeljs-0.6.0.min.js")
+  script(type="text/javascript",src="/lib/lodash/dist/lodash.min.js")
+  script(type="text/javascript",src="/js/lib/uuidjs/uuid.js")
+  script(type="text/javascript",src="/js/cakerush/cakerushclasses.js")
+  script(type="text/javascript",src="/js/cakerush/cakerushmain.js")
+  script(type="text/javascript",src="/lib/knockout/dist/knockout.js")
+  script(type="text/javascript",src="/lib/knockout-mapping/knockout.mapping.js")
+  //-script(type="text/javascript",src="//cdnjs.cloudflare.com/ajax/libs/knockout/3.1.0/knockout-min.js")
+  script.
+    document.addEventListener('DOMContentLoaded', init);
+
+block main
+  #mainContainer
+    #headerContainer.uk-text-center
+      .uk-container.uk-container-center
+        h1 Retro Roman Zombie Apocalypse
+        #instructions(style="white-space: pre;")
+          h3.uk-width-medium-1-3 How to play:
+          h4.uk-width-medium-1-3 Arrow Keys: Move your gladiator
+          h4.uk-width-medium-1-3 Spacebar: ATTACK!!!
+    #contentContainer
+      .uk-container.uk-container-center
+        #roomContainer.uk-text-center.row(data-bind="visible: !gameStarted()")
+          h2 Click on a room below to join the action
+          #roomList.uk-width-medium-1-2(data-bind="foreach: rooms")
+            button.uk-button.uk-button-large.uk-button-success.room.uk-width-medium-2-3(data-bind="click: $root.joinRoom")
+              .roomId Room ID:
+                span(data-bind="text: roomIndex")
+              .playerCount # of players:
+                span(data-bind="text: playerCount")
+          #roomData.uk-width-medium-1-2
+            button.uk-button.uk-button-primary(data-bind="click: $root.getRoomUpdate") Refresh Rooms
+            #totalRooms
+              h3 Total # of rooms:&nbsp;
+                span(data-bind="text: totalRooms")
+            #availableRooms
+              h3 # of rooms available:&nbsp;
+                span(data-bind="text: rooms().length")
+            #playersInRooms
+              h3 # of players in game:&nbsp;
+                span(data-bind="text: playersInRooms")
+        #gameContainer(data-bind="visible: gameStarted")
+          #gameData
+            h3.uk-width-medium-1-3.uk-text-center
+              div(data-bind="visible: !dead()") Health:
+                span(data-bind="text: health")
+              div(data-bind="visible: dead") YOU DIED!
+            h3.uk-width-medium-1-3.uk-text-center
+              div Score:
+                span(data-bind="text: points")
+            h2.uk-width-medium-1-3.uk-text-center
+              button.uk-button.uk-button-danger(data-bind="click: returnToRoomList") Return to room list
+          #gameCanvasContainer
+            canvas#gameCanvas(width=700,height=500) no canvas support
+    #footerContainer.uk-text-center
+      .uk-container.uk-container-center
+        h3 Powered by
+        h4
+          a(href="http://www.createjs.com/#!/EaselJS") EaselJS
+          span &nbsp;&nbsp;
+          a(href="http://nodejs.org/") Node.js
+          span &nbsp;&nbsp;
+          a(href="http://expressjs.com/") Express
+          span &nbsp;&nbsp;
+          a(href="http://socket.io/") Socket.IO
+        h4
+          a(href="http://lodash.com/") Lo-Dash
+          span &nbsp;&nbsp;
+          a(href="http://knockoutjs.com/") Knockout
+          span &nbsp;&nbsp;
+          a(href="https://github.com/broofa/node-uuid") node-uuid

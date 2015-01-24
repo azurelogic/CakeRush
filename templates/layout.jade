@@ -1,0 +1,24 @@
+doctype html
+html
+  head
+    block head
+      meta(name='viewport', content='width=device-width, initial-scale=1')
+      block title
+        title= title ? title + " | " + site.title : site.title
+      block styles
+        link(href="http://fonts.googleapis.com/css?family=Josefin+Sans:300,400,700,300italic,400italic,700italic|Iceland",rel="stylesheet",type="text/css")
+        link(href="/lib/uikit/css/uikit.min.css",rel="stylesheet",type="text/css")
+        link(href="/style/site.css",rel="stylesheet",type="text/css")
+      block scripts
+        script(src="/lib/jquery/dist/jquery.min.js")
+        script(src="/lib/uikit/js/uikit.min.js")
+  body
+    block body
+      #layout-site-container
+        #layout-header
+          block header
+        #layout-main
+          block main
+        #layout-footer
+          block footer
+
