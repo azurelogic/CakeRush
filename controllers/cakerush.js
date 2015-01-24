@@ -132,13 +132,17 @@ module.exports = function (io) {
         socket.emit('connectionRefused');
         return;
       }
+      var shouldGenerateFirstCake;
+      if (room.playerIds.length === 0){
+        shouldGenerateFirstCake = true
+      }
 
       // register player with room
       room.playerIds.push(socket.id);
       socket.join(room.id);
 
       // send verification that room was joined to the player with room id
-      socket.emit('roomJoined', {roomId: room.id});
+      socket.emit('roomJoined', {roomId: room.id, shouldGenerateFirstCake: shouldGenerateFirstCake});
     });
 
 // handle a user leaving a room not by disconnection

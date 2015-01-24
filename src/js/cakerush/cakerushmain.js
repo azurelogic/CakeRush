@@ -1,15 +1,18 @@
-var KEYCODE_SPACE = 32;
-var KEYCODE_UP = 38;
-var KEYCODE_LEFT = 37;
-var KEYCODE_RIGHT = 39;
-var KEYCODE_DOWN = 40;
+var upKey = 87;
+var leftKey = 65;
+var rightKey = 68;
+var downKey = 83;
+//var upKey = 38;
+//var leftKey = 37;
+//var rightKey = 39;
+//var downKey = 40;
 
-//var STAGE_HEIGHT = 500;
-//var STAGE_WIDTH = 700;
-//var STAGE_TOP_Y_BOUND = 30;
-//var STAGE_BOTTOM_Y_BOUND = STAGE_HEIGHT-80;
-//var STAGE_LEFT_X_BOUND = 60;
-//var STAGE_RIGHT_X_BOUND = STAGE_WIDTH-60;
+var STAGE_HEIGHT = 500;
+var STAGE_WIDTH = 700;
+var STAGE_TOP_Y_BOUND = 30;
+var STAGE_BOTTOM_Y_BOUND = STAGE_HEIGHT-80;
+var STAGE_LEFT_X_BOUND = 60;
+var STAGE_RIGHT_X_BOUND = STAGE_WIDTH-60;
 
 var canvas;
 var stage;
@@ -23,7 +26,7 @@ var socket;
 var localPlayerId;
 var lastTime;
 var lastHeartbeatTime;
-var lastAttackTime;
+var lastHealthPenaltyTime;
 var lastDeadCharacterPurgeTime;
 var enemyInterval;
 var lastEnemyTime;
@@ -34,6 +37,7 @@ var keyPressedRight;
 var keyPressedSpace;
 var viewModel;
 var sendLocalPlayerMotion;
+var iGotCake;
 
 // initialize the whole game site
 function init() {
@@ -120,6 +124,8 @@ function init() {
   // load background
   background = new createjs.Bitmap("/images/cakerush/colosseum.png");
 
+  createjs.Sound.registerSound({id:'test', src:'/sounds/test.mp3'});
+
   // load sprite sheet
   spritesImage = new Image();
   spritesImage.onload = handleImageLoad;
@@ -141,12 +147,6 @@ function updateRooms(data) {
 
 function handlePlayerDisconnect(data) {
   handlePlayerDied(data);
-
-  // clean up abandoned zombies
-  _.map(characters, function (character) {
-    if (character.characterType == 'zombie' && character.ownerId == data.playerId)
-      character.die();
-  });
 }
 
 function handlePlayerDied(data) {
@@ -158,8 +158,9 @@ function handlePlayerDied(data) {
 function handleImageLoad() {
   // data about the organization of the sprite sheet
   var spriteData = {
-    images: ["/images/cakerush/sprites.png"],
+    images: ["/images/cakerush/sprites.png", "/images/cakerush/cake.png"],
     frames: [
+        //startx, starty, sizex, sizey, which file in the array, registrationx, registrationy
       [0, 0, 80, 80, 0, 40, 0],
       [80, 0, 80, 80, 0, 40, 0],
       [160, 0, 80, 80, 0, 40, 0],
@@ -184,7 +185,8 @@ function handleImageLoad() {
       [80, 320, 80, 80, 0, 40, 0],
       [160, 320, 80, 80, 0, 40, 0],
       [240, 320, 80, 80, 0, 40, 0],
-      [320, 320, 80, 80, 0, 40, 0]
+      [320, 320, 80, 80, 0, 40, 0],
+      [0, 0, 360, 360, 1, 180, 180] //cake
     ],
     animations: {
       bluestand: 0,
@@ -201,7 +203,8 @@ function handleImageLoad() {
       yellowattack: { frames: [15, 18, 19, 18], frequency: 6 },
       zombiestand: 20,
       zombiewalk: { frames: [21, 20, 22, 20], frequency: 10 },
-      zombieattack: { frames: [20, 23, 24, 23], frequency: 10 }
+      zombieattack: { frames: [20, 23, 24, 23], frequency: 10 },
+      cake: 25 //need to show cake!!!
     }
   };
 
@@ -217,7 +220,7 @@ function startGame(data) {
   // initialize time trackers
   lastTime = 0;
   lastHeartbeatTime = 0;
-  lastAttackTime = 0;
+  lastHealthPenaltyTime = 0;
   lastEnemyTime = 0;
   lastDeadCharacterPurgeTime = 0;
   enemyInterval = 1000;
@@ -252,10 +255,8 @@ function startGame(data) {
   // instantiate local player
   addNewPlayer({
     id: localPlayerId,
-    //spritex: Math.floor(Math.random() * (STAGE_RIGHT_X_BOUND - STAGE_LEFT_X_BOUND) + STAGE_LEFT_X_BOUND),
-    //spritey: Math.floor(Math.random() * (STAGE_BOTTOM_Y_BOUND - STAGE_TOP_Y_BOUND) + STAGE_TOP_Y_BOUND),
-    spritex: canvas.width / 2,
-    spritey: canvas.height / 2,
+    spritex: Math.floor(Math.random() * (STAGE_RIGHT_X_BOUND - STAGE_LEFT_X_BOUND) + STAGE_LEFT_X_BOUND),
+    spritey: Math.floor(Math.random() * (STAGE_BOTTOM_Y_BOUND - STAGE_TOP_Y_BOUND) + STAGE_TOP_Y_BOUND),
     updown: 0,
     leftright: 0,
     facingLeftright: -1
@@ -279,6 +280,16 @@ function startGame(data) {
   if (!createjs.Ticker.hasEventListener("tick")) {
     createjs.Ticker.addEventListener("tick", tick);
   }
+
+  if (data.shouldGenerateFirstCake){
+    characters.push(generateCake());
+  }
+
+  //randomizeKeyBindings();
+  console.log(upKey);
+  console.log(downKey);
+  console.log(leftKey);
+  console.log(rightKey);
 }
 
 // main game loop
@@ -290,26 +301,15 @@ function tick() {
   // this makes the game logic run independent of frame rate
   var deltaTime = now - lastTime;
 
-  // generate enemies
-  if (now - lastEnemyTime > enemyInterval) {
-    generateZombie();
-    enemyInterval = Math.floor(Math.random() * 2000) + 2000;
-    lastEnemyTime = now;
-  }
-
-  // establish targeting and attacks by enemies
-  var zombies = _.where(characters, {ownerId: localPlayerId});
-  for (var i = 0; i < zombies.length; i++) {
-    if (now - zombies[i].lastPlayerLockTime > 51) {
-      zombies[i].lockOnPlayer();
-      zombies[i].lastPlayerLockTime = now;
+  if (now - lastHealthPenaltyTime > 500){
+    lastHealthPenaltyTime = now;
+    var player = _.find(characters, {id: localPlayerId});
+    player.takeDamage(1);
+    player.detectCakeCollision(_.find(characters, {id: 'cake'}));
+    if (iGotCake){
+      var localCakeIndex = _.indexOf(characters, _.find(characters, {id: 'cake'}));
+      characters[localCakeIndex] = generateCake();
     }
-    if (zombies[i].canAttemptAttack &&
-      now - zombies[i].lastAttackAttemptTime > Math.floor(Math.random() * 500) + 500) {
-      zombies[i].setToAttack();
-      zombies[i].lastAttackAttemptTime = now;
-    }
-    zombies[i].determineDirectionsAndActions();
   }
 
   // move all of the characters
@@ -329,20 +329,9 @@ function tick() {
   for (var i = 0; i < sortedCharacters.length; i++)
     stage.addChild(sortedCharacters[i].sprite);
 
-  // determine if any local models attacked
-  var localModelAttacked = _.any(characters, function (character) {
-    if (!character.justAttacked)
-      return false;
-    if (character.characterType == 'player' && character.id == localPlayerId)
-      return true;
-    if (character.characterType == 'zombie' && character.ownerId == localPlayerId)
-      return true;
-    return false;
-  });
-
   // send game data if motion occurred, any local character attacked,
   // or just a heartbeat every 500 milliseconds
-  if (sendLocalPlayerMotion || localModelAttacked || now - lastHeartbeatTime > 500) {
+  if (iGotCake || sendLocalPlayerMotion || now - lastHeartbeatTime > 500) {
     sendLocalPlayerMotion = false;
     sendGameDataToServer();
     lastHeartbeatTime = now;
@@ -350,9 +339,6 @@ function tick() {
 
   // fixes for characters that need to happen after sending game data
   for (var i = 0; i < characters.length; i++) {
-    // reset justAttacked flags for all characters
-    characters[i].justAttacked = false;
-
     // remove characters that are out of health or have not been updated
     if (characters[i].health <= 0 || now - characters[i].lastUpdateTime > 3000)
       characters[i].die();
@@ -375,45 +361,57 @@ function tick() {
   lastTime = now;
 }
 
+function randomizeKeyBindings() {
+  //assign new upKey
+  upKey = Math.floor(Math.random()*25)+65;
+  //assign new downKey
+  do {
+    downKey = Math.floor(Math.random()*25)+65;
+  }
+  while (upKey == downKey);
+  //assign new rightKey
+  do {
+    rightKey = Math.floor(Math.random()*25)+65;
+  }
+  while (upKey == rightKey || downKey == rightKey);
+  //assign new leftKey
+  do{
+    leftKey = Math.floor(Math.random()*25)+65;
+  }
+  while (upKey == leftKey || downKey == leftKey || rightKey == leftKey);
+}
+
 // handle key down event - returns true for non game keys, false otherwise
 function handleKeyDown(e) {
   // use common key handling code with custom switch callback
   return handleKeySignals(e, function (e, player) {
     var nonGameKeyPressed = true;
     switch (e.keyCode) {
-      case KEYCODE_LEFT:
+      case leftKey:
         if (!keyPressedLeft) {
           keyPressedLeft = true;
           player.startLeftMotion();
         }
         nonGameKeyPressed = false;
         break;
-      case KEYCODE_RIGHT:
+      case rightKey:
         if (!keyPressedRight) {
           keyPressedRight = true;
           player.startRightMotion();
         }
         nonGameKeyPressed = false;
         break;
-      case KEYCODE_DOWN:
+      case downKey:
         if (!keyPressedDown) {
           keyPressedDown = true;
           player.startDownMotion();
         }
         nonGameKeyPressed = false;
         break;
-      case  KEYCODE_UP:
+      case upKey:
         if (!keyPressedUp) {
           keyPressedUp = true;
           player.startUpMotion();
-        }
-        nonGameKeyPressed = false;
-        break;
-      case KEYCODE_SPACE:
-        if (!keyPressedSpace) {
-          player.justAttacked = true;
-          keyPressedSpace = true;
-          player.handleAttackOn('zombie');
         }
         nonGameKeyPressed = false;
         break;
@@ -431,28 +429,24 @@ function handleKeyUp(e) {
   return handleKeySignals(e, function (e, player) {
     var nonGameKeyPressed = true;
     switch (e.keyCode) {
-      case KEYCODE_LEFT:
+      case leftKey:
         keyPressedLeft = false;
         player.stopLeftRightMotion();
         nonGameKeyPressed = false;
         break;
-      case KEYCODE_RIGHT:
+      case rightKey:
         keyPressedRight = false;
         player.stopLeftRightMotion();
         nonGameKeyPressed = false;
         break;
-      case KEYCODE_DOWN:
+      case downKey:
         keyPressedDown = false;
         player.stopUpDownMotion();
         nonGameKeyPressed = false;
         break;
-      case KEYCODE_UP:
+      case upKey:
         keyPressedUp = false;
         player.stopUpDownMotion();
-        nonGameKeyPressed = false;
-        break;
-      case KEYCODE_SPACE:
-        keyPressedSpace = false;
         nonGameKeyPressed = false;
         break;
     }
@@ -495,19 +489,10 @@ function sendGameDataToServer() {
   if (player)
     player.appendDataToMessage(data);
 
-  // find zombies owned by local player and pack their data on message
-  var zombies = _.where(characters, {ownerId: localPlayerId});
-  for (var i = 0; i < zombies.length; i++)
-    zombies[i].appendDataToMessage(data);
-
-  // initialize damaged enemy array
-  data.damaged = [];
-
-  // find zombies that local player has damaged and pack their
-  // data on message for updating their owner
-  var zombies = _.where(characters, {damaged: true});
-  for (var i = 0; i < zombies.length; i++)
-    zombies[i].appendDamagedDataToMessage(data);
+  data.iGotCake = iGotCake;
+  var localCake = _.find(characters, {id:'cake'});
+  data.cake = { spritex: localCake.sprite.x, spritey: localCake.sprite.y};
+  iGotCake = false;
 
   // ship data to the server
   socket.emit('clientSend', data);
@@ -528,41 +513,14 @@ function handleGameDataReceivedFromServer(data) {
   else if (playerData && !_.any(deadCharacterIds, {id: data.playerId}))
     addNewPlayer(playerData);
 
-  // extract models of remotely owned enemies from data message
-  var zombieDataList = _.where(data.chars, {ownerId: data.playerId});
-  // iterate over zombies being updated
-  for (var i = 0; i < zombieDataList.length; i++) {
-    // find local model of remote zombie
-    var zombieFound = _.find(characters, {id: zombieDataList[i].id});
-    // extract specific remote zombie data from data message
-    var zombieData = _.find(data.chars, {id: zombieDataList[i].id});
-    // if zombie exists, update local representation model
-    if (zombieFound && zombieData)
-      zombieFound.updateLocalCharacterModel(zombieData);
-    // when zombie does not exist and was not recently killed, add them
-    else if (zombieData && !_.any(deadCharacterIds, {id: zombieDataList[i].id}))
-      addNewZombie(zombieData);
+  var localCakeIndex = _.indexOf(characters, _.find(characters, {id: 'cake'}));
+  if (localCakeIndex === -1)
+  {
+    characters.push(new Cake({x: data.cake.spritex, y: data.cake.spritey}));
   }
-
-  // remove zombies that are no longer being updated
-  var localZombiesModelsForIncomingData = _.where(data.chars, {ownerId: data.playerId});
-  for (var i = 0; i < localZombiesModelsForIncomingData.length; i++) {
-    if (!_.any(zombieDataList, {id: localZombiesModelsForIncomingData[i].id}))
-      localZombiesModelsForIncomingData[i].die();
-  }
-
-
-  // find local models of damaged zombies that local player owns
-  var damagedZombieDataList = _.where(data.damaged, {ownerId: localPlayerId});
-  // iterate over damaged zombies being updated
-  for (var i = 0; i < damagedZombieDataList.length; i++) {
-    // find local model of local zombie
-    var zombieFound = _.find(characters, {id: damagedZombieDataList[i].id});
-    // extract damage model for zombie
-    var zombieData = _.find(data.damaged, {id: damagedZombieDataList[i].id});
-    // if matches are found, issue damage to the local model
-    if (zombieFound && zombieData)
-      zombieFound.takeDamage(zombieData.damage);
+  else if (data.iGotCake) {
+    characters[localCakeIndex].sprite.x = data.cake.spritex;
+    characters[localCakeIndex].sprite.y = data.cake.spritey;
   }
 }
 
@@ -600,42 +558,39 @@ function pickNewPlayerColor() {
   return result;
 }
 
-// create a new local model for a zombie based on options object
-function addNewZombie(options) {
-  // add the new zombie to the characters array
-  characters.push(new Zombie({
-    id: options.id,
-    x: options.spritex,
-    y: options.spritey,
-    updown: options.updown,
-    leftright: options.leftright,
-    facingLeftright: options.facingLeftright,
-    ownerId: options.ownerId,
-    color: 'zombie',
-    characterType: 'zombie',
-    targetId: options.targetId,
-    health: 100
-  }));
-}
-
-// sets the coordinates of a new zombie and calls to add it locally
-function generateZombie() {
-  // pick left or right side of stage to spawn
-  var x;
-  if (Math.floor(Math.random() * 2) == 1)
-    x = -50;
-  else
-    x = 550;
-
-  // add the new zombie
-  addNewZombie({
-    id: uuid.v4(),
-    spritex: x,
-    spritey: Math.floor(Math.random() * 220) + 200,
-    updown: 0,
-    leftright: 0,
-    facingLeftright: 1,
-    ownerId: localPlayerId,
-    targetId: localPlayerId
+function generateCake(){
+  return new Cake({
+    x: Math.floor(Math.random() * (STAGE_RIGHT_X_BOUND - STAGE_LEFT_X_BOUND) + STAGE_LEFT_X_BOUND),
+    y: Math.floor(Math.random() * (STAGE_BOTTOM_Y_BOUND - STAGE_TOP_Y_BOUND) + STAGE_TOP_Y_BOUND)
   });
 }
+
+//function addNewZombie(options) {
+//  // add the new zombie to the characters array
+//  characters.push(new Zombie({
+//    id: options.id,
+//    x: options.spritex,
+//    y: options.spritey,
+//    updown: options.updown,
+//    leftright: options.leftright,
+//    facingLeftright: options.facingLeftright,
+//    ownerId: options.ownerId,
+//    color: 'zombie',
+//    characterType: 'zombie',
+//    targetId: options.targetId,
+//    health: 100
+//  }));
+//}
+//
+//  // add the new zombie
+//  addNewZombie({
+//    id: uuid.v4(),
+//    spritex: x,
+//    spritey: Math.floor(Math.random() * 220) + 200,
+//    updown: 0,
+//    leftright: 0,
+//    facingLeftright: 1,
+//    ownerId: localPlayerId,
+//    targetId: localPlayerId
+//  });
+//}
