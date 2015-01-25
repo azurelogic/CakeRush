@@ -1,3 +1,8 @@
+var lastUpKeydownTime = 0;
+var lastDownKeydownTime = 0;
+var lastLeftKeydownTime = 0;
+var lastRightKeydownTime = 0;
+var keyUpLag = 500;
 var upKey = 87;
 var leftKey = 65;
 var rightKey = 68;
@@ -269,7 +274,7 @@ function startGame(data) {
 
   // attach key press functions to document events
   document.onkeydown = handleKeyDown;
-  document.onkeyup = handleKeyUp;
+  //document.onkeyup = handleKeyUp;
 
   // set preferred frame rate to 60 frames per second and
   // use requestanimationframe if available
@@ -285,11 +290,7 @@ function startGame(data) {
     characters.push(generateCake());
   }
 
-  //randomizeKeyBindings();
-  console.log(upKey);
-  console.log(downKey);
-  console.log(leftKey);
-  console.log(rightKey);
+  randomizeKeyBindings();
 }
 
 // main game loop
@@ -311,6 +312,14 @@ function tick() {
       characters[localCakeIndex] = generateCake();
     }
   }
+  if (keyPressedUp && now - lastUpKeydownTime > keyUpLag)
+    handleKeyUp({keyCode: upKey});
+  if (keyPressedDown && now - lastDownKeydownTime > keyUpLag)
+    handleKeyUp({keyCode: downKey});
+  if (keyPressedLeft && now - lastLeftKeydownTime > keyUpLag)
+    handleKeyUp({keyCode: leftKey});
+  if (keyPressedRight && now - lastRightKeydownTime > keyUpLag)
+    handleKeyUp({keyCode: rightKey});
 
   // move all of the characters
   for (var i = 0; i < characters.length; i++)
@@ -386,33 +395,38 @@ function handleKeyDown(e) {
   // use common key handling code with custom switch callback
   return handleKeySignals(e, function (e, player) {
     var nonGameKeyPressed = true;
+    var now = Date.now();
     switch (e.keyCode) {
       case leftKey:
-        if (!keyPressedLeft) {
+        if (!keyPressedLeft && now - lastLeftKeydownTime > keyUpLag) {
           keyPressedLeft = true;
           player.startLeftMotion();
         }
+        lastLeftKeydownTime = now;
         nonGameKeyPressed = false;
         break;
       case rightKey:
-        if (!keyPressedRight) {
+        if (!keyPressedRight && now - lastRightKeydownTime > keyUpLag) {
           keyPressedRight = true;
           player.startRightMotion();
         }
+        lastRightKeydownTime = now;
         nonGameKeyPressed = false;
         break;
       case downKey:
-        if (!keyPressedDown) {
+        if (!keyPressedDown && now - lastDownKeydownTime > keyUpLag) {
           keyPressedDown = true;
           player.startDownMotion();
         }
+        lastDownKeydownTime = now;
         nonGameKeyPressed = false;
         break;
       case upKey:
-        if (!keyPressedUp) {
+        if (!keyPressedUp && now - lastUpKeydownTime > keyUpLag) {
           keyPressedUp = true;
           player.startUpMotion();
         }
+        lastUpKeydownTime = now;
         nonGameKeyPressed = false;
         break;
     }
@@ -430,23 +444,31 @@ function handleKeyUp(e) {
     var nonGameKeyPressed = true;
     switch (e.keyCode) {
       case leftKey:
-        keyPressedLeft = false;
-        player.stopLeftRightMotion();
+        if (keyPressedLeft){
+          keyPressedLeft = false;
+          player.stopLeftRightMotion();
+        }
         nonGameKeyPressed = false;
         break;
       case rightKey:
-        keyPressedRight = false;
-        player.stopLeftRightMotion();
+        if (keyPressedRight){
+          keyPressedRight = false;
+          player.stopLeftRightMotion();
+        }
         nonGameKeyPressed = false;
         break;
       case downKey:
-        keyPressedDown = false;
-        player.stopUpDownMotion();
+        if (keyPressedDown){
+          keyPressedDown = false;
+          player.stopUpDownMotion();
+        }
         nonGameKeyPressed = false;
         break;
       case upKey:
-        keyPressedUp = false;
-        player.stopUpDownMotion();
+        if (keyPressedUp){
+          keyPressedUp = false;
+          player.stopUpDownMotion();
+        }
         nonGameKeyPressed = false;
         break;
     }

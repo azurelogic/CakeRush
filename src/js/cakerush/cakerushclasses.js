@@ -13,7 +13,6 @@ var Character = function (options) {
   this.velocityFactor = .08;
   this.damageRadius = 60;
   this.damageRadiusSquared = this.damageRadius * this.damageRadius;
-  this.damageRating = 50;
   this.health = options.health;
   this.stageBoundTrap = false;
   this.localAttackAnimationComplete = false;
@@ -55,27 +54,17 @@ Character.prototype.move = function (deltaTime) {
     this.sprite.y += this.updown * deltaTime * this.velocityFactor * 0.70711;
   }
 
-  // set trap variable once a character enters the game area
-  if (!this.stageBoundTrap && (this.sprite.x < STAGE_RIGHT_X_BOUND && this.sprite.x > STAGE_LEFT_X_BOUND))
-    this.stageBoundTrap = true;
 
-  // ensure character doesn't leave the game area if trap variable is set
-  if (this.stageBoundTrap) {
-    if (this.sprite.x < STAGE_LEFT_X_BOUND)
-      this.sprite.x = STAGE_LEFT_X_BOUND;
-    else if (this.sprite.x > STAGE_RIGHT_X_BOUND)
-      this.sprite.x = STAGE_RIGHT_X_BOUND;
-  }
+  // ensure character doesn't leave the game area
+  if (this.sprite.x < STAGE_LEFT_X_BOUND)
+    this.sprite.x = STAGE_LEFT_X_BOUND;
+  else if (this.sprite.x > STAGE_RIGHT_X_BOUND)
+    this.sprite.x = STAGE_RIGHT_X_BOUND;
+
   if (this.sprite.y < STAGE_TOP_Y_BOUND)
     this.sprite.y = STAGE_TOP_Y_BOUND;
   else if (this.sprite.y > STAGE_BOTTOM_Y_BOUND)
     this.sprite.y = STAGE_BOTTOM_Y_BOUND;
-
-  // fix remote character animations
-  if (this.localAttackAnimationComplete) {
-    this.updateAnimation();
-    this.localAttackAnimationComplete = false;
-  }
 };
 
 // assemble the animation name based on character color, animation
@@ -181,17 +170,7 @@ Player.prototype.updateLocalCharacterModel = function (characterData) {
 
   // mark as updated
   this.lastUpdateTime = Date.now();
-
-  //// handle motion and attacks
-  //if (characterData.justAttacked) {
-  //  // ensure that attack animation from remote characters complete
-  //  this.sprite.onAnimationEnd = function () {
-  //    this.localAttackAnimationComplete = true;
-  //  };
-  //  this.handleAttackOn('zombie');
-  //}
-  //else
-    this.updateAnimation();
+  this.updateAnimation();
 };
 
 // handle player death
@@ -222,23 +201,16 @@ Player.prototype.detectCakeCollision = function(cake) {
       iGotCake = true;
       viewModel.awardPoints(50);
       //todo better health algorithm
-      this.health = 100
+      this.health = 100;
       viewModel.health(this.health);
       //todo food coma/pass out
-      randomizeKeyBindings()
+      handleKeyUp({keyCode: upKey});
+      handleKeyUp({keyCode: downKey});
+      handleKeyUp({keyCode: leftKey});
+      handleKeyUp({keyCode: rightKey});
+      randomizeKeyBindings();
     }
 };
-
-//// handle zombie death and award points
-//Zombie.prototype.die = function () {
-//  // award points on viewmodel if killed by local player
-//  if (this.killedBy == localPlayerId)
-//    viewModel.awardPoints(50);
-//
-//  deadCharacterIds.push({id: this.id, time: Date.now()});
-//  this.dead = true;
-//};
-
 
 // Cake constructor
 var Cake = function (options) {
