@@ -14,10 +14,10 @@ var downKey = 83;
 
 var STAGE_HEIGHT = 500;
 var STAGE_WIDTH = 700;
-var STAGE_TOP_Y_BOUND = 30;
-var STAGE_BOTTOM_Y_BOUND = STAGE_HEIGHT-80;
-var STAGE_LEFT_X_BOUND = 60;
-var STAGE_RIGHT_X_BOUND = STAGE_WIDTH-60;
+var STAGE_TOP_Y_BOUND = 220;
+var STAGE_BOTTOM_Y_BOUND = STAGE_HEIGHT-5;
+var STAGE_LEFT_X_BOUND = 40;
+var STAGE_RIGHT_X_BOUND = STAGE_WIDTH-40;
 
 var canvas;
 var stage;
@@ -64,6 +64,7 @@ function init() {
     self.gameStarted = ko.observable();
     self.currentRoomId = ko.observable();
     self.dead = ko.observable();
+    self.playerColor = ko.observable();
 
     // room stats
     self.totalRooms = ko.observable();
@@ -127,14 +128,15 @@ function init() {
   socket.emit('playerConnect');
 
   // load background
-  background = new createjs.Bitmap("/images/cakerush/colosseum.png");
+  background = new createjs.Bitmap("/images/cakerush/background.png");
 
   createjs.Sound.registerSound({id:'test', src:'/sounds/test.mp3'});
 
+  handleImageLoad();
   // load sprite sheet
-  spritesImage = new Image();
-  spritesImage.onload = handleImageLoad;
-  spritesImage.src = "/images/cakerush/sprites.png";
+  //spritesImage = new Image();
+  //spritesImage.onload = handleImageLoad;
+  //spritesImage.src = "/images/cakerush/sprites.png";
 }
 
 // sets player id and room data from server message
@@ -163,53 +165,91 @@ function handlePlayerDied(data) {
 function handleImageLoad() {
   // data about the organization of the sprite sheet
   var spriteData = {
-    images: ["/images/cakerush/sprites.png", "/images/cakerush/cake.png"],
+    images: ["/images/cakerush/cake.png", "/images/cakerush/fatBlue.png", "/images/cakerush/fatRed.png",
+      "/images/cakerush/fatYellow.png", "/images/cakerush/fatGreen.png"],
     frames: [
         //startx, starty, sizex, sizey, which file in the array, registrationx, registrationy
-      [0, 0, 80, 80, 0, 40, 0],
-      [80, 0, 80, 80, 0, 40, 0],
-      [160, 0, 80, 80, 0, 40, 0],
-      [240, 0, 80, 80, 0, 40, 0],
-      [320, 0, 80, 80, 0, 40, 0],
-      [0, 80, 80, 80, 0, 40, 0],
-      [80, 80, 80, 80, 0, 40, 0],
-      [160, 80, 80, 80, 0, 40, 0],
-      [240, 80, 80, 80, 0, 40, 0],
-      [320, 80, 80, 80, 0, 40, 0],
-      [0, 160, 80, 80, 0, 40, 0],
-      [80, 160, 80, 80, 0, 40, 0],
-      [160, 160, 80, 80, 0, 40, 0],
-      [240, 160, 80, 80, 0, 40, 0],
-      [320, 160, 80, 80, 0, 40, 0],
-      [0, 240, 80, 80, 0, 40, 0],
-      [80, 240, 80, 80, 0, 40, 0],
-      [160, 240, 80, 80, 0, 40, 0],
-      [240, 240, 80, 80, 0, 40, 0],
-      [320, 240, 80, 80, 0, 40, 0],
-      [0, 320, 80, 80, 0, 40, 0],
-      [80, 320, 80, 80, 0, 40, 0],
-      [160, 320, 80, 80, 0, 40, 0],
-      [240, 320, 80, 80, 0, 40, 0],
-      [320, 320, 80, 80, 0, 40, 0],
-      [0, 0, 360, 360, 1, 180, 180] //cake
+      //[0, 0, 80, 80, 0, 40, 0],
+      //[80, 0, 80, 80, 0, 40, 0],
+      //[160, 0, 80, 80, 0, 40, 0],
+      //[240, 0, 80, 80, 0, 40, 0],
+      //[320, 0, 80, 80, 0, 40, 0],
+
+      //cake
+      [0, 0, 360, 360, 0, 180, 220], //0
+      //blue
+      [0, 0, 69, 191, 1, 34, 191], // 1 side step 1
+      [69, 0, 69, 191, 1, 34, 191], // 2 side step 2
+      [138, 0, 69, 191, 1, 34, 191], // 3 side stand
+      [0, 191, 69, 191, 1, 34, 191], // 4 front stand
+      [69, 191, 69, 191, 1, 34, 191], // 5 front step 1
+      [138, 191, 69, 191, 1, 34, 191], // 6 front step 2
+      [0, 382, 69, 191, 1, 34, 191], // 7 back stand
+      [69, 382, 69, 191, 1, 34, 191], // 8 back step 1
+      [138, 382, 69, 191, 1, 34, 191], // 9 back step 2
+      //red
+      [0, 0, 69, 191, 2, 34, 191], // 10 side step 1
+      [69, 0, 69, 191, 2, 34, 191], // 11 side step 2
+      [138, 0, 69, 191, 2, 34, 191], // 12 side stand
+      [0, 191, 69, 191, 2, 34, 191], // 13 front stand
+      [69, 191, 69, 191, 2, 34, 191], // 14 front step 1
+      [138, 191, 69, 191, 2, 34, 191], // 15 front step 2
+      [0, 382, 69, 191, 2, 34, 191], // 16 back stand
+      [69, 382, 69, 191, 2, 34, 191], // 17 back step 1
+      [138, 382, 69, 191, 2, 34, 191], // 18 back step 2
+      //yellow
+      [0, 0, 69, 191, 3, 34, 191], // 19 side step 1
+      [69, 0, 69, 191, 3, 34, 191], // 20 side step 2
+      [138, 0, 69, 191, 3, 34, 191], // 21 side stand
+      [0, 191, 69, 191, 3, 34, 191], // 22 front stand
+      [69, 191, 69, 191, 3, 34, 191], // 23 front step 1
+      [138, 191, 69, 191, 3, 34, 191], // 24 front step 2
+      [0, 382, 69, 191, 3, 34, 191], // 25 back stand
+      [69, 382, 69, 191, 3, 34, 191], // 26 back step 1
+      [138, 382, 69, 191, 3, 34, 191], // 27 back step 2
+      //green
+      [0, 0, 69, 191, 4, 34, 191], // 28 side step 1
+      [69, 0, 69, 191, 4, 34, 191], // 29 side step 2
+      [138, 0, 69, 191, 4, 34, 191], // 30 side stand
+      [0, 191, 69, 191, 4, 34, 191], // 31 front stand
+      [69, 191, 69, 191, 4, 34, 191], // 32 front step 1
+      [138, 191, 69, 191, 4, 34, 191], // 33 front step 2
+      [0, 382, 69, 191, 4, 34, 191], // 34 back stand
+      [69, 382, 69, 191, 4, 34, 191], // 35 back step 1
+      [138, 382, 69, 191, 4, 34, 191] // 36 back step 2
     ],
     animations: {
-      bluestand: 0,
-      bluewalk: { frames: [1, 0, 2, 0], frequency: 6 },
-      blueattack: { frames: [0, 3, 4, 3], frequency: 6 },
-      greenstand: 5,
-      greenwalk: { frames: [6, 5, 7, 5], frequency: 6 },
-      greenattack: { frames: [5, 8, 9, 8], frequency: 6 },
-      redstand: 10,
-      redwalk: { frames: [11, 10, 12, 10], frequency: 6 },
-      redattack: { frames: [10, 13, 14, 13], frequency: 6 },
-      yellowstand: 15,
-      yellowwalk: { frames: [16, 15, 17, 15], frequency: 6 },
-      yellowattack: { frames: [15, 18, 19, 18], frequency: 6 },
-      zombiestand: 20,
-      zombiewalk: { frames: [21, 20, 22, 20], frequency: 10 },
-      zombieattack: { frames: [20, 23, 24, 23], frequency: 10 },
-      cake: 25 //need to show cake!!!
+      //bluestand: 0,
+      //bluewalk: { frames: [1, 0, 2, 0], frequency: 6 },
+      //blueattack: { frames: [0, 3, 4, 3], frequency: 6 },
+
+      cake: 0,
+      bluesidestand:3,
+      bluefrontstand:4,
+      bluebackstand:7,
+      bluesidewalk: { frames: [3,1,3,2], frequency: 6},
+      bluefrontwalk: { frames: [4,5,4,6], frequency: 6},
+      bluebackwalk: { frames: [7,8,7,9], frequency: 6},
+      redsidestand:12,
+      redfrontstand:13,
+      redbackstand:16,
+      redsidewalk: { frames: [12,10,12,11], frequency: 6},
+      redfrontwalk: { frames: [13,14,13,15], frequency: 6},
+      redbackwalk: { frames: [16,17,16,18], frequency: 6},
+      yellowsidestand:21,
+      yellowfrontstand:22,
+      yellowbackstand:25,
+      yellowsidewalk: { frames: [21,19,21,20], frequency: 6},
+      yellowfrontwalk: { frames: [22,23,22,24], frequency: 6},
+      yellowbackwalk: { frames: [25,26,25,27], frequency: 6},
+      greensidestand:30,
+      greenfrontstand:31,
+      greenbackstand:34,
+      greensidewalk: { frames: [30,28,30,29], frequency: 6},
+      greenfrontwalk: { frames: [31,32,31,33], frequency: 6},
+      greenbackwalk: { frames: [34,35,34,36], frequency: 6}
+
+
     }
   };
 
@@ -269,6 +309,9 @@ function startGame(data) {
 
   // reset viewmodel game state
   viewModel.newGameReset();
+
+  viewModel.playerColor(_.find(characters, {id: localPlayerId}).color);
+
   // set flag that game has started
   viewModel.gameStarted(true);
 
@@ -290,7 +333,7 @@ function startGame(data) {
     characters.push(generateCake());
   }
 
-  randomizeKeyBindings();
+  //randomizeKeyBindings();
 }
 
 // main game loop

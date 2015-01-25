@@ -5,13 +5,15 @@ var Character = function (options) {
   this.sprite = new createjs.BitmapAnimation(spriteSheet);
   this.sprite.x = options.x;
   this.sprite.y = options.y;
+  this.sprite.scaleX = 1;
+  this.sprite.scaleY = 1;
   this.updown = options.updown;
   this.leftright = options.leftright;
   this.facingLeftright = this.leftright;
   this.color = options.color;
   this.characterType = options.characterType;
-  this.velocityFactor = .08;
-  this.damageRadius = 60;
+  this.velocityFactor = .1;
+  this.damageRadius = 50;
   this.damageRadiusSquared = this.damageRadius * this.damageRadius;
   this.health = options.health;
   this.stageBoundTrap = false;
@@ -24,10 +26,15 @@ var Character = function (options) {
   stage.update();
 
   // setup animations on sprite sheet
-  spriteSheet.getAnimation(this.color + 'stand').next = this.color + 'stand';
-  spriteSheet.getAnimation(this.color + 'stand_h').next = this.color + 'stand_h';
-  spriteSheet.getAnimation(this.color + 'walk').next = this.color + 'walk';
-  spriteSheet.getAnimation(this.color + 'walk_h').next = this.color + 'walk_h';
+  spriteSheet.getAnimation(this.color + 'sidestand').next = this.color + 'sidestand';
+  spriteSheet.getAnimation(this.color + 'sidestand_h').next = this.color + 'sidestand_h';
+  spriteSheet.getAnimation(this.color + 'sidewalk').next = this.color + 'sidewalk';
+  spriteSheet.getAnimation(this.color + 'sidewalk_h').next = this.color + 'sidewalk_h';
+  spriteSheet.getAnimation(this.color + 'frontstand').next = this.color + 'frontstand';
+  spriteSheet.getAnimation(this.color + 'frontwalk').next = this.color + 'frontwalk';
+  spriteSheet.getAnimation(this.color + 'backstand').next = this.color + 'backstand';
+  spriteSheet.getAnimation(this.color + 'backwalk').next = this.color + 'backwalk';
+
 
   // start animation standing
   this.sprite.gotoAndPlay(this.getAnimationNameFor('stand'));
@@ -70,10 +77,16 @@ Character.prototype.move = function (deltaTime) {
 // assemble the animation name based on character color, animation
 // type, and current direction
 Character.prototype.getAnimationNameFor = function (animationType) {
-  if (this.facingLeftright == 1)
-    return this.color + animationType + '_h';
+  var direction = 'front';
+  if (animationType === 'walk'){
+    if (this.updown === -1) direction = 'back';
+    if (this.updown === 1) direction = 'front';
+    if (this.updown === 0) direction = 'side';
+  }
+  if (this.facingLeftright == 1 && direction !== 'front' && + direction  !== 'back')
+    return this.color + direction + animationType + '_h';
   else
-    return this.color + animationType;
+    return this.color + direction + animationType;
 };
 
 // ----- motion handling function section -----
@@ -135,10 +148,6 @@ Character.prototype.takeDamage = function (damageAmount) {
 var Player = function (options) {
   // call base class constructor
   Character.call(this, options);
-
-  // setup player attack animation follow up
-  spriteSheet.getAnimation(this.color + 'attack').next = this.color + 'stand';
-  spriteSheet.getAnimation(this.color + 'attack_h').next = this.color + 'stand_h';
 };
 
 // establish that Player inherits from Character

@@ -22,60 +22,71 @@ block append scripts
 block main
   #mainContainer
     #headerContainer.uk-text-center
+      .uk-container.uk-container-center.uk-margin-bottom
+        .uk-grid(style="white-space: pre;")
+          h1.uk-width-1-1 Cake Rush
+          h2.uk-width-1-1 Global Game Jam 2015
+          h3.uk-width-1-1 How to play:
+          h4.uk-width-1-1
+            | Movement controls are randomly distributed on the keyboard [A-Z]
+            | Eat cake to survive. When you eat cake, the controls change.
+            | Good luck!
+    #contentContainer.uk-margin-bottom
       .uk-container.uk-container-center
-        h1 Retro Roman Zombie Apocalypse
-        #instructions(style="white-space: pre;")
-          h3.uk-width-medium-1-3 How to play:
-          h4.uk-width-medium-1-3 Arrow Keys: Move your gladiator
-          h4.uk-width-medium-1-3 Spacebar: ATTACK!!!
-    #contentContainer
-      .uk-container.uk-container-center
-        #roomContainer.uk-text-center.row(data-bind="visible: !gameStarted()")
+        #roomContainer.uk-text-center(data-bind="visible: !gameStarted()")
           h2 Click on a room below to join the action
-          #roomList.uk-width-medium-1-2(data-bind="foreach: rooms")
-            button.uk-button.uk-button-large.uk-button-success.room.uk-width-medium-2-3(data-bind="click: $root.joinRoom")
-              .roomId Room ID:
-                span(data-bind="text: roomIndex")
-              .playerCount # of players:
-                span(data-bind="text: playerCount")
-          #roomData.uk-width-medium-1-2
-            button.uk-button.uk-button-primary(data-bind="click: $root.getRoomUpdate") Refresh Rooms
-            #totalRooms
-              h3 Total # of rooms:&nbsp;
-                span(data-bind="text: totalRooms")
-            #availableRooms
-              h3 # of rooms available:&nbsp;
-                span(data-bind="text: rooms().length")
-            #playersInRooms
-              h3 # of players in game:&nbsp;
-                span(data-bind="text: playersInRooms")
+          .uk-grid
+            #roomList.uk-width-medium-1-2(data-bind="foreach: rooms")
+              button.uk-button.uk-button-large.uk-button-success.room.uk-width-medium-2-3.uk-margin-bottom(data-bind="click: $root.joinRoom")
+                .roomId Room ID:
+                  span(data-bind="text: roomIndex")
+                .playerCount # of players:
+                  span(data-bind="text: playerCount")
+            #roomData.uk-width-medium-1-2
+              button.uk-button.uk-button-primary.uk-margin-bottom(data-bind="click: $root.getRoomUpdate") Refresh Rooms
+              #totalRooms
+                h3 Total # of rooms:&nbsp;
+                  span(data-bind="text: totalRooms")
+              #availableRooms
+                h3 # of rooms available:&nbsp;
+                  span(data-bind="text: rooms().length")
+              #playersInRooms
+                h3 # of players in game:&nbsp;
+                  span(data-bind="text: playersInRooms")
         #gameContainer(data-bind="visible: gameStarted")
-          #gameData
-            h3.uk-width-medium-1-3.uk-text-center
-              div(data-bind="visible: !dead()") Health:
-                span(data-bind="text: health")
-              div(data-bind="visible: dead") YOU DIED!
-            h3.uk-width-medium-1-3.uk-text-center
-              div Score:
-                span(data-bind="text: points")
-            h2.uk-width-medium-1-3.uk-text-center
-              button.uk-button.uk-button-danger(data-bind="click: returnToRoomList") Return to room list
-          #gameCanvasContainer
-            canvas#gameCanvas(width=700,height=500) no canvas support
+          .uk-grid
+            #gameData.uk-width-medium-1-4
+              h3.uk-text-center
+                div Your color:&nbsp;
+                  span(data-bind="text: playerColor")
+              h3.uk-text-center
+                div(data-bind="visible: !dead()") Health:&nbsp;
+                  span(data-bind="text: health")
+                div(data-bind="visible: dead") YOU DIED!
+              h3.uk-text-center
+                div Score:&nbsp;
+                  span(data-bind="text: points")
+              h2.uk-text-center
+                button.uk-button.uk-button-danger(data-bind="click: returnToRoomList") Return to room list
+            #gameCanvasContainer.uk-width-medium-3-4
+              canvas#gameCanvas(width=700,height=500) no canvas support
     #footerContainer.uk-text-center
       .uk-container.uk-container-center
-        h3 Powered by
-        h4
-          a(href="http://www.createjs.com/#!/EaselJS") EaselJS
-          span &nbsp;&nbsp;
-          a(href="http://nodejs.org/") Node.js
-          span &nbsp;&nbsp;
-          a(href="http://expressjs.com/") Express
-          span &nbsp;&nbsp;
-          a(href="http://socket.io/") Socket.IO
-        h4
-          a(href="http://lodash.com/") Lo-Dash
-          span &nbsp;&nbsp;
-          a(href="http://knockoutjs.com/") Knockout
-          span &nbsp;&nbsp;
-          a(href="https://github.com/broofa/node-uuid") node-uuid
+        .uk-grid
+          h3.uk-width-1-1 Concept by
+          h4.uk-width-1-1 Rob Ribeiro, Robert Thompson, Jacob Beauchamp, Brett Campbell, Jake Harsch, Andrew Barker
+          h3.uk-width-1-1 Powered by
+          h4.uk-width-1-1
+            a(href="http://www.createjs.com/#!/EaselJS") EaselJS
+            span &nbsp;&nbsp;
+            a(href="http://nodejs.org/") Node.js
+            span &nbsp;&nbsp;
+            a(href="http://expressjs.com/") Express
+            span &nbsp;&nbsp;
+            a(href="http://socket.io/") Socket.IO
+          h4.uk-width-1-1
+            a(href="http://lodash.com/") Lo-Dash
+            span &nbsp;&nbsp;
+            a(href="http://knockoutjs.com/") Knockout
+            span &nbsp;&nbsp;
+            a(href="https://github.com/broofa/node-uuid") node-uuid
