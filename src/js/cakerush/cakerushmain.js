@@ -115,8 +115,8 @@ function init() {
   ko.applyBindings(viewModel);
 
   // connect to server
-  //socket = io.connect(location.protocol + '//' + location.host + '/sockets/cakerush');
-  socket = io.connect('http://localhost:3000/sockets/cakerush');
+  socket = io.connect(location.protocol + '//' + location.host + '/sockets/cakerush');
+  //socket = io.connect('http://localhost:3000/sockets/cakerush');
 
   // register callbacks for server messages
   socket.on('connectionReply', loadRoomsAndMyId);
@@ -336,7 +336,7 @@ function startGame(data) {
   }
   createjs.Sound.play('background', {loop:-1});
 
-  //randomizeKeyBindings();
+  randomizeKeyBindings();
 }
 
 // main game loop
