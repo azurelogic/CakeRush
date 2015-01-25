@@ -208,6 +208,7 @@ Player.prototype.detectCakeCollision = function(cake) {
     if (x * x + y * y <= this.damageRadiusSquared)
     {
       iGotCake = true;
+      createjs.Sound.play('eatcake');
       viewModel.awardPoints(50);
       //todo better health algorithm
       this.health = 100;

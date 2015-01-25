@@ -93,6 +93,7 @@ function init() {
       stage.removeAllEventListeners();
       self.getRoomUpdate();
       self.gameStarted(false);
+      createjs.Sound.stop();
     };
 
     // adds points to current score
@@ -130,8 +131,9 @@ function init() {
   // load background
   background = new createjs.Bitmap("/images/cakerush/background.png");
 
-  createjs.Sound.registerSound({id:'test', src:'/sounds/test.mp3'});
 
+  createjs.Sound.registerSound({id:'background', src:'/sounds/cake.mp3'});
+  createjs.Sound.registerSound({id:'eatcake', src:'/sounds/eatcake.wav'});
   handleImageLoad();
   // load sprite sheet
   //spritesImage = new Image();
@@ -332,6 +334,7 @@ function startGame(data) {
   if (data.shouldGenerateFirstCake){
     characters.push(generateCake());
   }
+  createjs.Sound.play('background', {loop:-1});
 
   //randomizeKeyBindings();
 }
